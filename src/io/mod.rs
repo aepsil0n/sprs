@@ -9,7 +9,7 @@ use std::fmt;
 
 use num_traits::cast::NumCast;
 
-use sparse::{TriMatI, TriMatViewI};
+use sparse::{TriMatI, TriMatIter};
 use indexing::SpIndex;
 use num_kinds::{PrimitiveKind, NumKind};
 
@@ -198,15 +198,18 @@ where I: SpIndex,
 
 /// Write a sparse matrix into the matrix market format.
 ///
-/// TODO: as the order of the non-zero entries does not matter, any matrix
-/// capable of producing an iterator of (row, col, val) should be accepted.
-pub fn write_matrix_market<N, I, P>(path: P,
-                                    mat: TriMatViewI<N, I>)
+/// TODO: add example once it's possible to save a compressed matrix
+pub fn write_matrix_market<'a, N, I, CI, RI, DI, M, P>(path: P, mat: M)
     -> Result<(), io::Error>
-where I: SpIndex + fmt::Display,
-      N: PrimitiveKind + Copy + fmt::Display,
+where I: 'a + SpIndex + fmt::Display,
+      N: 'a + PrimitiveKind + Copy + fmt::Display,
+      RI: Iterator<Item=&'a I>,
+      CI: Iterator<Item=&'a I>,
+      DI: Iterator<Item=&'a N>,
+      M: Into<TriMatIter<RI, CI, DI>>,
       P: AsRef<Path>,
 {
+    let mat = mat.into();
     let f = File::create(path)?;
     let mut writer = io::BufWriter::new(f);
 
@@ -225,7 +228,7 @@ where I: SpIndex + fmt::Display,
     write!(writer, "{} {} {}\n", mat.rows(), mat.cols(), mat.nnz())?;
 
     // entries
-    for (row, col, val) in izip!(mat.row_inds(), mat.col_inds(), mat.data()) {
+    for (val, (row, col)) in mat {
         write!(writer, "{} {} {}\n", row + 1, col + 1, val)?;
     }
     Ok(())
@@ -284,5 +287,8 @@ mod test {
         write_matrix_market(&save_path, mat.view()).unwrap();
         let mat2 = read_matrix_market::<f64, usize, _>(&save_path).unwrap();
         assert_eq!(mat, mat2);
+        write_matrix_market(&save_path, &mat2).unwrap();
+        let mat3 = read_matrix_market::<f64, usize, _>(&save_path).unwrap();
+        assert_eq!(mat, mat3);
     }
 }

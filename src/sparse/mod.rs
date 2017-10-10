@@ -202,6 +202,24 @@ pub type TriMat<N> = TriMatI<N, usize>;
 pub type TriMatView<'a, N> = TriMatViewI<'a, N, usize>;
 pub type TriMatViewMut<'a, N> = TriMatViewMutI<'a, N, usize>;
 
+/// An iterator over elements of a sparse matrix, in the triplet format
+///
+/// The dataypes RI, CI, and DI are iterators yielding the row, column and
+/// values of non-zero entries.
+///
+/// As in `TriMat`, no order guarantee is provided and the same location can
+/// appear multiple times. The non-zero value is then considered as the sum
+/// of all the entries sharing its location.
+#[derive(PartialEq, Debug, Clone)]
+pub struct TriMatIter<RI, CI, DI> {
+    rows: usize,
+    cols: usize,
+    nnz: usize,
+    row_inds: RI,
+    col_inds: CI,
+    data: DI,
+}
+
 mod prelude {
     pub use super::{
         CsMatBase,
@@ -227,6 +245,7 @@ mod prelude {
         TriMatViewI,
         TriMatViewMut,
         TriMatViewMutI,
+        TriMatIter,
     };
 }
 
@@ -266,3 +285,4 @@ pub mod linalg;
 pub mod symmetric;
 pub mod compressed;
 pub mod to_dense;
+pub mod triplet_iter;

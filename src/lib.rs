@@ -63,7 +63,6 @@ assert_eq!(a, b.to_csc());
 extern crate num_traits;
 extern crate num_complex;
 extern crate ndarray;
-#[macro_use] extern crate itertools;
 #[cfg(test)] extern crate tempdir;
 
 mod sparse;
@@ -104,6 +103,7 @@ pub use sparse::{
     TriMatI,
     TriMatViewI,
     TriMatViewMutI,
+    TriMatIter,
 };
 
 
